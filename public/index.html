@@ -152,3 +152,88 @@
   </footer>
 </body>
 </html>
+<script>
+  const form = document.getElementById('formServicio');
+  const lista = document.getElementById('listaServicios');
+  const filtro = document.getElementById('filtroServicio');
+  const totalServicios = document.getElementById('totalServicios');
+
+  let servicios = JSON.parse(localStorage.getItem('serviciosManosPanama')) || [];
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const inputs = form.querySelectorAll('input, textarea');
+    const data = {};
+    inputs.forEach(input => data[input.placeholder] = input.value);
+    data.fecha = new Date().toLocaleDateString();
+    servicios.push(data);
+    localStorage.setItem('serviciosManosPanama', JSON.stringify(servicios));
+    mostrarServicios(servicios);
+    actualizarEstadisticas();
+    form.reset();
+  });
+
+  filtro.addEventListener('input', () => {
+    const texto = filtro.value.toLowerCase();
+    const filtrados = servicios.filter(s => s["Servicio ofrecido (ej. costura, carpintería)"].toLowerCase().includes(texto));
+    mostrarServicios(filtrados);
+  });
+
+  function mostrarServicios(listaDatos) {
+    lista.innerHTML = '';
+    if (listaDatos.length === 0) {
+      lista.innerHTML = '<p class="text-center col-span-2">No hay servicios disponibles aún.</p>';
+      return;
+    }
+    listaDatos.forEach((serv, index) => {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-6 rounded shadow-md border-l-4 border-blue-600 relative hover:shadow-lg transition';
+      card.innerHTML = `
+        <h4 class="text-xl font-bold text-blue-800">${serv["Servicio ofrecido (ej. costura, carpintería)"]}</h4>
+        <p><strong>👤 Nombre:</strong> ${serv["Nombre completo"]}</p>
+        <p><strong>📍 Ubicación:</strong> ${serv["Provincia / Distrito / Corregimiento"]}</p>
+        <p><strong>💵 Precio:</strong> ${serv["Precio estimado (opcional)"] || 'No especificado'}</p>
+        <p><strong>📞 Contacto:</strong> <a href="tel:${serv["Número de contacto"]}" class="text-blue-600 underline">${serv["Número de contacto"]}</a></p>
+        <p class="mt-2 text-sm text-gray-600">${serv["Descripción (opcional)"] || 'Sin descripción adicional.'}</p>
+        <p class="text-xs text-right text-gray-400 mt-2">📅 Publicado: ${serv.fecha}</p>
+        <button class="absolute top-2 right-2 nes-btn is-error text-xs" onclick="eliminarServicio(${index})">Eliminar</button>
+      `;
+      lista.appendChild(card);
+    });
+  }
+
+  function eliminarServicio(index) {
+    if (confirm("¿Estás seguro de que deseas eliminar este servicio?")) {
+      servicios.splice(index, 1);
+      localStorage.setItem('serviciosManosPanama', JSON.stringify(servicios));
+      mostrarServicios(servicios);
+      actualizarEstadisticas();
+    }
+  }
+
+  function actualizarEstadisticas() {
+    totalServicios.textContent = `Total de servicios registrados: ${servicios.length}`;
+  }
+
+  // Nueva función para cargar los servicios desde GitHub
+  async function cargarServiciosDesdeGitHub() {
+    try {
+      const respuesta = await fetch('https://raw.githubusercontent.com/USUARIO/REPO/main/servicios.json');
+      if (!respuesta.ok) throw new Error("No se pudo cargar el archivo");
+      const datosDesdeGitHub = await respuesta.json();
+      servicios.length = 0;
+      servicios.push(...datosDesdeGitHub);
+      localStorage.setItem('serviciosManosPanama', JSON.stringify(servicios));
+      mostrarServicios(servicios);
+      actualizarEstadisticas();
+    } catch (error) {
+      console.error("Error al cargar servicios desde GitHub:", error);
+    }
+  }
+
+  // Llamada a la función para cargar los servicios desde GitHub
+  cargarServiciosDesdeGitHub();
+
+  mostrarServicios(servicios);
+  actualizarEstadisticas();
+</script>
