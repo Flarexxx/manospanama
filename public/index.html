@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ManosPanamá</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/nes.css/css/nes.min.css" />
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+    }
+    .bg-panama {
+      background-image: linear-gradient(to right, #ff0000, #ffffff, #005aa7);
+    }
+    .animate-icons {
+      animation: marquee 20s linear infinite;
+      display: flex;
+      gap: 2rem;
+    }
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-white to-blue-50 text-gray-800 min-h-screen">
+  <header class="bg-panama text-white py-4 shadow-lg sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
+      <h1 class="text-3xl font-bold flex items-center gap-2 animate-pulse">🇵🇦 ManosPanamá</h1>
+      <nav>
+        <ul class="flex gap-6 text-lg">
+          <li><a href="#servicios" class="hover:underline">Buscar Servicios</a></li>
+          <li><a href="#registro" class="hover:underline">Publicar Servicio</a></li>
+          <li><a href="#estadisticas" class="hover:underline">Estadísticas</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="overflow-hidden bg-white shadow-inner border-b border-gray-200">
+    <div class="animate-icons py-3 px-4 text-2xl text-red-700 font-semibold">
+      <span>🛠️</span><span>✂️</span><span>🧵</span><span>🔨</span><span>🏗️</span><span>🧰</span><span>👷</span><span>🪚</span><span>🚜</span><span>🧹</span>
+    </div>
+  </div>
+
+  <section class="py-12 text-center bg-white">
+    <h2 class="text-4xl font-bold text-blue-700">Conecta con trabajadores rurales de tu comunidad</h2>
+    <p class="mt-4 text-gray-600 text-lg">Desde costura hasta construcción, encuentra talento local cerca de ti.</p>
+  </section>
+
+  <section id="registro" class="py-10 px-4 max-w-3xl mx-auto bg-white shadow-md rounded-lg">
+    <h3 class="text-2xl font-semibold text-blue-700 mb-6">📋 Publica tu servicio</h3>
+    <form id="formServicio" class="grid gap-4">
+      <input type="text" placeholder="Nombre completo" class="p-3 rounded border nes-input" required />
+      <input type="text" placeholder="Servicio ofrecido (ej. costura, carpintería)" class="p-3 rounded border nes-input" required />
+      <input type="text" placeholder="Provincia / Distrito / Corregimiento" class="p-3 rounded border nes-input" required />
+      <input type="text" placeholder="Número de contacto" class="p-3 rounded border nes-input" required />
+      <input type="number" placeholder="Precio estimado (opcional)" class="p-3 rounded border nes-input" />
+      <textarea placeholder="Descripción (opcional)" class="p-3 rounded border nes-textarea"></textarea>
+      <button type="submit" class="nes-btn is-success">✅ Publicar</button>
+    </form>
+  </section>
+
+  <section class="py-10 px-4 max-w-5xl mx-auto">
+    <h3 class="text-2xl font-semibold text-blue-700 text-center mb-6">🔍 Buscar por tipo de servicio</h3>
+    <input type="text" id="filtroServicio" placeholder="Ej: costura, albañilería..." class="w-full p-3 border rounded nes-input mb-6">
+  </section>
+
+  <section id="servicios" class="py-10 px-4 bg-gray-100">
+    <h3 class="text-2xl font-semibold text-blue-700 text-center mb-6">📌 Servicios disponibles</h3>
+    <div id="listaServicios" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Servicios se mostrarán aquí -->
+    </div>
+  </section>
+
+  <section id="estadisticas" class="py-10 px-4 max-w-5xl mx-auto text-center">
+    <h3 class="text-2xl font-semibold text-blue-700 mb-6">📊 Estadísticas</h3>
+    <p id="totalServicios" class="text-lg text-gray-700">Total de servicios registrados: 0</p>
+  </section>
+
+  <script>
+    const form = document.getElementById('formServicio');
+    const lista = document.getElementById('listaServicios');
+    const filtro = document.getElementById('filtroServicio');
+    const totalServicios = document.getElementById('totalServicios');
+
+    const servicios = JSON.parse(localStorage.getItem('serviciosManosPanama')) || [];
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inputs = form.querySelectorAll('input, textarea');
+      const data = {};
+      inputs.forEach(input => data[input.placeholder] = input.value);
+      data.fecha = new Date().toLocaleDateString();
+      servicios.push(data);
+      localStorage.setItem('serviciosManosPanama', JSON.stringify(servicios));
+      mostrarServicios(servicios);
+      actualizarEstadisticas();
+      form.reset();
+    });
+
+    filtro.addEventListener('input', () => {
+      const texto = filtro.value.toLowerCase();
+      const filtrados = servicios.filter(s => s["Servicio ofrecido (ej. costura, carpintería)"].toLowerCase().includes(texto));
+      mostrarServicios(filtrados);
+    });
+
+    function mostrarServicios(listaDatos) {
+      lista.innerHTML = '';
+      if (listaDatos.length === 0) {
+        lista.innerHTML = '<p class="text-center col-span-2">No hay servicios disponibles aún.</p>';
+        return;
+      }
+      listaDatos.forEach((serv, index) => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-6 rounded shadow-md border-l-4 border-blue-600 relative hover:shadow-lg transition';
+        card.innerHTML = `
+          <h4 class="text-xl font-bold text-blue-800">${serv["Servicio ofrecido (ej. costura, carpintería)"]}</h4>
+          <p><strong>👤 Nombre:</strong> ${serv["Nombre completo"]}</p>
+          <p><strong>📍 Ubicación:</strong> ${serv["Provincia / Distrito / Corregimiento"]}</p>
+          <p><strong>💵 Precio:</strong> ${serv["Precio estimado (opcional)"] || 'No especificado'}</p>
+          <p><strong>📞 Contacto:</strong> <a href="tel:${serv["Número de contacto"]}" class="text-blue-600 underline">${serv["Número de contacto"]}</a></p>
+          <p class="mt-2 text-sm text-gray-600">${serv["Descripción (opcional)"] || 'Sin descripción adicional.'}</p>
+          <p class="text-xs text-right text-gray-400 mt-2">📅 Publicado: ${serv.fecha}</p>
+          <button class="absolute top-2 right-2 nes-btn is-error text-xs" onclick="eliminarServicio(${index})">Eliminar</button>
+        `;
+        lista.appendChild(card);
+      });
+    }
+
+    function eliminarServicio(index) {
+      if (confirm("¿Estás seguro de que deseas eliminar este servicio?")) {
+        servicios.splice(index, 1);
+        localStorage.setItem('serviciosManosPanama', JSON.stringify(servicios));
+        mostrarServicios(servicios);
+        actualizarEstadisticas();
+      }
+    }
+
+    function actualizarEstadisticas() {
+      totalServicios.textContent = `Total de servicios registrados: ${servicios.length}`;
+    }
+
+    mostrarServicios(servicios);
+    actualizarEstadisticas();
+  </script>
+
+  <footer class="text-center py-6 bg-panama text-white mt-10">
+    <p>© 2025 ManosPanamá. Todos los derechos reservados.</p>
+  </footer>
+</body>
+</html>
